@@ -7,7 +7,7 @@ app.use('/static', express.static('public'))
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 const TodoTask = require("./models/TodoTask");
-
+const EasyBusiness = require('./models/EasyBusiness');
 const mongoose = require("mongoose");
 //connection to db
 mongoose.set("useFindAndModify", false);
@@ -20,19 +20,26 @@ mongoose.connect(process.env.DB_CONNECT, { useNewUrlParser: true }, () => {
 // GET METHOD
 app.get("/", (req, res) => {
     TodoTask.find({}, (err, tasks) => {
-        res.render("todo.ejs", { todoTasks: tasks });
+        res.send(tasks);
+        // res.render("todo.ejs", { todoTasks: tasks });
     });
 });
 
-app.post('/', async (req, res) => {
+app
+.route("/add")
+.post(async (req, res) => {
+// .post('/',async (req, res) => {
+    console.log("req.body.content ",req)
     const todoTask = new TodoTask({
         content: req.body.content
     });
     try {
         await todoTask.save();
-        res.redirect("/");
+        res.send({"result":"success"});
+        // res.redirect("/");
     } catch (err) {
-        res.redirect("/");
+        res.send({"error":err});
+        // res.redirect("/");
     }
 });
 
@@ -58,6 +65,37 @@ app.route("/remove/:id").get((req, res) => {
     const id = req.params.id;
     TodoTask.findByIdAndRemove(id, err => {
         if (err) return res.send(500, err);
-        res.redirect("/");
+        // res.redirect("/");
+        res.send({"result":"success"})
     });
+});
+
+//easy business model- APIS
+
+// GET METHOD FOR EASY BUSINESS TO GET ALL THE ITEMS AVAILABLE
+app
+.route("/getAllItems")
+.get((req, res) => {
+    EasyBusiness.find({}, (err, obj) => {
+        res.send(obj);
+    });
+});
+
+app
+.route("/add-item")
+.post(async (req, res) => {
+    console.log("req.body ",req)
+    const easyBusiness = new EasyBusiness({
+        itemType: req.body.itemType,
+        itemCategory: req.body.itemCategory,
+        itemCost: req.body.itemCost,
+        itemName: req.body.itemName,
+        itemExpiry: req.body.itemExpiry,
+    });
+    try {
+        await easyBusiness.save();
+        res.send({"result":"Records inserted"}); 
+    } catch (err) {
+        res.send({"error":err});
+    }
 });
