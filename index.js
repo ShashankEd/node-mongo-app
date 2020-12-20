@@ -2,12 +2,13 @@ const express = require("express");
 const app = express();
 const dotenv = require('dotenv');
 dotenv.config();
-
+const helper = require('./helperFunction');
 app.use('/static', express.static('public'))
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 const TodoTask = require("./models/TodoTask");
 const EasyBusiness = require('./models/EasyBusiness');
+const User = require('./models/User');
 const mongoose = require("mongoose");
 //connection to db
 mongoose.set("useFindAndModify", false);
@@ -95,6 +96,67 @@ app
     try {
         await easyBusiness.save();
         res.send({"result":"Records inserted"}); 
+    } catch (err) {
+        res.send({"error":err});
+    }
+});
+
+//register endpoint
+app
+.route("/register")
+.post(async (req, res) => {
+    const user = new User({
+        email: req.body.email,
+        password: req.body.password,
+    });
+    try {
+        User.find({email:req.body.email}, async (err,obj) => {
+            if(obj.length) {
+                res.send("Email already exist")
+            } else {
+                await user.save();
+                console.log("registered");
+                const tok = helper.generateJWTToken(req.body.email);
+                console.log("user saved and token ", tok);
+                res.json({
+                    "data": {
+                        "token": tok
+                    }
+                }); 
+            }
+        })
+    } catch (err) {
+        console.log("inside catch",err);
+        res.send({"error":err});
+    }
+});
+
+// console.log(process.env.TOKEN_SECRET);
+// console.log(require('crypto').randomBytes(64).toString('hex'));
+
+//ShubhamGupta
+//login with JWTtoken
+app
+.route("/login")
+.post(async (req, res) => {
+    const user = new User({
+        email: req.body.email,
+        password: req.body.password,
+    });
+    try {
+        User.find({email:req.body.email}, async (err,obj) => {
+            console.log("Object " , obj,req.body.email);
+            if(obj.length) {
+                const authHeader = req.headers['authorization'];
+                const token = authHeader && authHeader.split(' ')[1];
+                console.log("token" , token);
+                const response = helper.validateJWTToken(token , res);
+                console.log("User logged in " ); 
+            } else {
+                    res.send("Email does not exist");
+                    }
+        })
+
     } catch (err) {
         res.send({"error":err});
     }

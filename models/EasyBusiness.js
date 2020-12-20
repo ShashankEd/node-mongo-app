@@ -25,4 +25,4 @@ const easyBusinessModelSchema = new mongoose.Schema({
         default: Date.now
     }
 })
-module.exports = mongoose.model('easyBusinessModel', easyBusinessModelSchema);
+module.exports = mongoose.model('Products', easyBusinessModelSchema);
