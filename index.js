@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const dotenv = require('dotenv');
 dotenv.config();
-const token = require('./helperFunction');
+const helper = require('./helperFunction');
 app.use('/static', express.static('public'))
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
@@ -112,7 +112,7 @@ app
     try {
         await user.save();
         console.log("registered");
-        const tok = token.generateJWTToken(req.body.email);
+        const tok = helper.generateJWTToken(req.body.email);
         console.log("user saved and token ", tok);
         res.json({
             "data": {
@@ -126,3 +126,23 @@ app
 
 // console.log(process.env.TOKEN_SECRET);
 // console.log(require('crypto').randomBytes(64).toString('hex'));
+
+//ShubhamGupta
+//login with JWTtoken
+app
+.route("/login")
+.post(async (req, res) => {
+    const user = new User({
+        email: req.body.email,
+        password: req.body.password,
+    });
+    try {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+        console.log("token" , token);
+        const response = helper.validateJWTToken(token , res);
+        console.log("User logged in " ); 
+    } catch (err) {
+        res.send({"error":err});
+    }
+});

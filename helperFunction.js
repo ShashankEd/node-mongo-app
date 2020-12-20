@@ -12,4 +12,25 @@ const generateJWTToken = (username) => {
     }
    
 } 
+//shubham gupta
+//validate token
+const validateJWTToken = (token , res) => {
+    if (token == null) {
+        return res.sendStatus(401) // if there isn't any token
+
+    } else{
+        jwt.verify(token, process.env.TOKEN_SECRET , (err, user) => {
+            if (err) {
+                console.log("Error is ", err)
+                return res.sendStatus(403)
+            } else {
+                console.log("user ", user);
+                return res.json({"data":{
+                    "status": "Hi "+ user + " You're successfully logged in!"
+                }})
+            }
+          })
+    }
+}
+exports.validateJWTToken = validateJWTToken;
 exports.generateJWTToken = generateJWTToken;  
