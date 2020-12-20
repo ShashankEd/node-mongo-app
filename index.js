@@ -110,16 +110,23 @@ app
         password: req.body.password,
     });
     try {
-        await user.save();
-        console.log("registered");
-        const tok = helper.generateJWTToken(req.body.email);
-        console.log("user saved and token ", tok);
-        res.json({
-            "data": {
-                "token": tok
+        User.find({email:req.body.email}, async (err,obj) => {
+            if(obj.length) {
+                res.send("Email already exist")
+            } else {
+                await user.save();
+                console.log("registered");
+                const tok = helper.generateJWTToken(req.body.email);
+                console.log("user saved and token ", tok);
+                res.json({
+                    "data": {
+                        "token": tok
+                    }
+                }); 
             }
-        }); 
+        })
     } catch (err) {
+        console.log("inside catch",err);
         res.send({"error":err});
     }
 });
