@@ -144,11 +144,19 @@ app
         password: req.body.password,
     });
     try {
-        const authHeader = req.headers['authorization'];
-        const token = authHeader && authHeader.split(' ')[1];
-        console.log("token" , token);
-        const response = helper.validateJWTToken(token , res);
-        console.log("User logged in " ); 
+        User.find({email:req.body.email}, async (err,obj) => {
+            console.log("Object " , obj,req.body.email);
+            if(obj.length) {
+                const authHeader = req.headers['authorization'];
+                const token = authHeader && authHeader.split(' ')[1];
+                console.log("token" , token);
+                const response = helper.validateJWTToken(token , res);
+                console.log("User logged in " ); 
+            } else {
+                    res.send("Email does not exist");
+                    }
+        })
+
     } catch (err) {
         res.send({"error":err});
     }
