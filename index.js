@@ -8,6 +8,8 @@ app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 const TodoTask = require("./models/TodoTask");
 const EasyBusiness = require('./models/EasyBusiness');
+const Purchase = require('./models/Purchase');
+const Supplier = require('./models/Supplier');
 const User = require('./models/User');
 const mongoose = require("mongoose");
 //connection to db
@@ -15,7 +17,7 @@ mongoose.set("useFindAndModify", false);
 mongoose.set("useUnifiedTopology", true);
 mongoose.connect(process.env.DB_CONNECT, { useNewUrlParser: true }, () => {
     console.log("Connected to db!");
-    app.listen(3000, () => console.log("Mongoose Server Up and running"));
+    app.listen(process.env.PORT || 3000, () => console.log("Mongoose Server Up and running"));
 })
 
 // GET METHOD
@@ -27,22 +29,22 @@ app.get("/", (req, res) => {
 });
 
 app
-.route("/add")
-.post(async (req, res) => {
-// .post('/',async (req, res) => {
-    console.log("req.body.content ",req)
-    const todoTask = new TodoTask({
-        content: req.body.content
+    .route("/add")
+    .post(async (req, res) => {
+        // .post('/',async (req, res) => {
+        console.log("req.body.content ", req)
+        const todoTask = new TodoTask({
+            content: req.body.content
+        });
+        try {
+            await todoTask.save();
+            res.send({ "result": "success" });
+            // res.redirect("/");
+        } catch (err) {
+            res.send({ "error": err });
+            // res.redirect("/");
+        }
     });
-    try {
-        await todoTask.save();
-        res.send({"result":"success"});
-        // res.redirect("/");
-    } catch (err) {
-        res.send({"error":err});
-        // res.redirect("/");
-    }
-});
 
 //UPDATE
 app
@@ -67,7 +69,7 @@ app.route("/remove/:id").get((req, res) => {
     TodoTask.findByIdAndRemove(id, err => {
         if (err) return res.send(500, err);
         // res.redirect("/");
-        res.send({"result":"success"})
+        res.send({ "result": "success" })
     });
 });
 
@@ -75,61 +77,61 @@ app.route("/remove/:id").get((req, res) => {
 
 // GET METHOD FOR EASY BUSINESS TO GET ALL THE ITEMS AVAILABLE
 app
-.route("/getAllItems")
-.get((req, res) => {
-    EasyBusiness.find({}, (err, obj) => {
-        res.send(obj);
+    .route("/getAllItems")
+    .get((req, res) => {
+        EasyBusiness.find({}, (err, obj) => {
+            res.send(obj);
+        });
     });
-});
 
 app
-.route("/add-item")
-.post(async (req, res) => {
-    console.log("req.body ",req)
-    const easyBusiness = new EasyBusiness({
-        itemType: req.body.itemType,
-        itemCategory: req.body.itemCategory,
-        itemCost: req.body.itemCost,
-        itemName: req.body.itemName,
-        itemExpiry: req.body.itemExpiry,
+    .route("/add-item")
+    .post(async (req, res) => {
+        console.log("req.body ", req)
+        const easyBusiness = new EasyBusiness({
+            itemType: req.body.itemType,
+            itemCategory: req.body.itemCategory,
+            itemCost: req.body.itemCost,
+            itemName: req.body.itemName,
+            itemExpiry: req.body.itemExpiry,
+        });
+        try {
+            await easyBusiness.save();
+            res.send({ "result": "Records inserted" });
+        } catch (err) {
+            res.send({ "error": err });
+        }
     });
-    try {
-        await easyBusiness.save();
-        res.send({"result":"Records inserted"}); 
-    } catch (err) {
-        res.send({"error":err});
-    }
-});
 
 //register endpoint
 app
-.route("/register")
-.post(async (req, res) => {
-    const user = new User({
-        email: req.body.email,
-        password: req.body.password,
+    .route("/register")
+    .post(async (req, res) => {
+        const user = new User({
+            email: req.body.email,
+            password: req.body.password,
+        });
+        try {
+            User.find({ email: req.body.email }, async (err, obj) => {
+                if (obj.length) {
+                    res.send("Email already exist")
+                } else {
+                    await user.save();
+                    console.log("registered");
+                    const tok = helper.generateJWTToken(req.body.email);
+                    console.log("user saved and token ", tok);
+                    res.json({
+                        "data": {
+                            "token": tok
+                        }
+                    });
+                }
+            })
+        } catch (err) {
+            console.log("inside catch", err);
+            res.send({ "error": err });
+        }
     });
-    try {
-        User.find({email:req.body.email}, async (err,obj) => {
-            if(obj.length) {
-                res.send("Email already exist")
-            } else {
-                await user.save();
-                console.log("registered");
-                const tok = helper.generateJWTToken(req.body.email);
-                console.log("user saved and token ", tok);
-                res.json({
-                    "data": {
-                        "token": tok
-                    }
-                }); 
-            }
-        })
-    } catch (err) {
-        console.log("inside catch",err);
-        res.send({"error":err});
-    }
-});
 
 // console.log(process.env.TOKEN_SECRET);
 // console.log(require('crypto').randomBytes(64).toString('hex'));
@@ -137,27 +139,89 @@ app
 //ShubhamGupta
 //login with JWTtoken
 app
-.route("/login")
-.post(async (req, res) => {
-    const user = new User({
-        email: req.body.email,
-        password: req.body.password,
-    });
-    try {
-        User.find({email:req.body.email}, async (err,obj) => {
-            console.log("Object " , obj,req.body.email);
-            if(obj.length) {
-                const authHeader = req.headers['authorization'];
-                const token = authHeader && authHeader.split(' ')[1];
-                console.log("token" , token);
-                const response = helper.validateJWTToken(token , res);
-                console.log("User logged in " ); 
-            } else {
+    .route("/login")
+    .post(async (req, res) => {
+        const user = new User({
+            email: req.body.email,
+            password: req.body.password,
+        });
+        try {
+            User.find({ email: req.body.email }, async (err, obj) => {
+                console.log("Object ", obj, req.body.email);
+                if (obj.length) {
+                    const authHeader = req.headers['authorization'];
+                    const token = authHeader && authHeader.split(' ')[1];
+                    console.log("token", token);
+                    const response = helper.validateJWTToken(token, res);
+                    console.log("User logged in ");
+                } else {
                     res.send("Email does not exist");
-                    }
-        })
+                }
+            })
 
-    } catch (err) {
-        res.send({"error":err});
-    }
-});
+        } catch (err) {
+            res.send({ "error": err });
+        }
+    });
+//Shubham Gupta
+//Purchase
+app
+    .route("/purchase")
+    .post(async (req, res) => {
+        // console.log("req.body ", req)
+        const purchase = new Purchase({
+            itemType: req.body.itemType,
+            itemCategory: req.body.itemCategory,
+            itemCost: req.body.itemCost,
+            itemName: req.body.itemName,
+            itemExpiry: req.body.itemExpiry,
+            sellerName: req.body.sellerName,
+            quantity: req.body.quantity,
+            date: req.body.date,
+        });
+        try {
+            const authHeader = req.headers['authorization'];
+            const token = authHeader && authHeader.split(' ')[1];
+            console.log("token ",token);
+            const response = helper.generateJWTToken(token);
+            console.log("response ",response);
+            if(response){
+                purchase.save();
+                res.send("Purchase saved");  
+            } else if(response === null){
+                res.send("token required")
+            } else {
+                res.send("Error occured")
+            }
+        } catch (err) {
+            res.send({ "error": err });
+        }
+    });
+//Shubham Gupta
+//Supplier
+app
+    .route("/supplier")
+    .post(async (req, res) => {
+        console.log("req.body ", req)
+        const supplier = new Supplier({
+            name: req.body.name,
+            contactID: req.body.contactID,
+        });
+        try {
+            const authHeader = req.headers['authorization'];
+            const token = authHeader && authHeader.split(' ')[1];
+            console.log("token ",token);
+            const response = helper.generateJWTToken(token);
+            console.log("response ",response);
+            if(response){
+                supplier.save();
+                res.send("Supplier saved");  
+            } else if(response === null){
+                res.send("token required")
+            } else {
+                res.send("Error occured")
+            }
+        } catch (err) {
+            res.send({ "error": err });
+        }
+    });

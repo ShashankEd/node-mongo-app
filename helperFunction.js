@@ -32,5 +32,20 @@ const validateJWTToken = (token , res) => {
           })
     }
 }
+const genricJWTValidator = (token ) => {
+    if (token == null) {
+        return null // if there isn't any token
+
+    } else{
+        jwt.verify(token, process.env.TOKEN_SECRET , (err, user) => {
+            if (err) {
+                return false
+            } else {
+                return true
+            }
+          })
+    }
+}
+exports.genricJWTValidator = genricJWTValidator;
 exports.validateJWTToken = validateJWTToken;
 exports.generateJWTToken = generateJWTToken;  
