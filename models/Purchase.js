@@ -32,6 +32,10 @@ const PurchaseModelSchema = new mongoose.Schema({
     quantity: {
         type: String,
         default: Date.now
-    }
+    },
+    userEmail: {
+        type: String,
+        required: true
+    },
 })
 module.exports = mongoose.model('Purchase', PurchaseModelSchema);

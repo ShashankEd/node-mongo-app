@@ -12,6 +12,11 @@ const SupplierSchema = new mongoose.Schema({
     date: {
         type: Date,
         default: Date.now
-    }
+    },
+    userEmail: {
+        type: String,
+        required: true
+    },
+
 })
 module.exports = mongoose.model('supplier', SupplierSchema);
