@@ -10,6 +10,7 @@ const TodoTask = require("./models/TodoTask");
 const EasyBusiness = require('./models/EasyBusiness');
 const Purchase = require('./models/Purchase');
 const Supplier = require('./models/Supplier');
+const Stock = require('./models/Stock');
 const User = require('./models/User');
 const mongoose = require("mongoose");
 //connection to db
@@ -182,16 +183,17 @@ app
         try {
             const authHeader = req.headers['authorization'];
             const token = authHeader && authHeader.split(' ')[1];
-            console.log("token ",token);
-            const response = helper.generateJWTToken(token);
-            console.log("response ",response);
-            if(response){
+            console.log("token ", token);
+            const response = helper.genricJWTValidator(token);
+            console.log("response ", response);
+            if (response) {
+                Object.assign(purchase, { userEmail: response })
                 purchase.save();
-                res.send("Purchase saved");  
-            } else if(response === null){
+                res.send("Purchase saved");
+            } else if (response === null) {
                 res.send("token required")
             } else {
-                res.send("Error occured")
+                res.send("Invalid token")
             }
         } catch (err) {
             res.send({ "error": err });
@@ -210,13 +212,48 @@ app
         try {
             const authHeader = req.headers['authorization'];
             const token = authHeader && authHeader.split(' ')[1];
-            console.log("token ",token);
-            const response = helper.generateJWTToken(token);
-            console.log("response ",response);
-            if(response){
+            console.log("token ", token);
+            const response = helper.genricJWTValidator(token);
+            console.log("response ", response);
+            if (response) {
+                Object.assign(supplier, { userEmail: response })
                 supplier.save();
-                res.send("Supplier saved");  
-            } else if(response === null){
+                res.send("Supplier saved");
+            } else if (response === null) {
+                res.send("token required")
+            } else {
+                res.send("Invalid token")
+            }
+        } catch (err) {
+            res.send({ "error": err });
+        }
+    });
+//Shubham Gupta
+//Stock
+
+app
+    .route("/stock")
+    .post(async (req, res) => {
+        console.log("req.body ", req)
+        const stock = new Stock({
+            productName: req.body.productName,
+            productQuantity: req.body.productQuantity,
+            productType: req.body.productType,
+            productExpiry: req.body.productExpiry,
+            productSupplier: req.body.productSupplier,
+        });
+        try {
+            const authHeader = req.headers['authorization'];
+            const token = authHeader && authHeader.split(' ')[1];
+            console.log("token ", token);
+            const response = helper.genricJWTValidator(token);
+            console.log("response ", response);
+            if (response) {
+                console.log("inside if", response)
+                Object.assign(stock, { userEmail: response })
+                stock.save();
+                res.send("Stock saved");
+            } else if (response === null) {
                 res.send("token required")
             } else {
                 res.send("Error occured")

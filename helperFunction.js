@@ -33,18 +33,18 @@ const validateJWTToken = (token , res) => {
     }
 }
 const genricJWTValidator = (token ) => {
-    if (token == null) {
-        return null // if there isn't any token
-
-    } else{
+    let result= null;
+    if (token != null){
         jwt.verify(token, process.env.TOKEN_SECRET , (err, user) => {
-            if (err) {
-                return false
+            console.log("ERROR & USER ", err, user);
+            if (user) {
+               result = user;
             } else {
-                return true
+               result = false;
             }
           })
     }
+    return result;
 }
 exports.genricJWTValidator = genricJWTValidator;
 exports.validateJWTToken = validateJWTToken;
