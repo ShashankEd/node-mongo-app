@@ -6,12 +6,6 @@ const helper = require('./helperFunction');
 app.use('/static', express.static('public'))
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
-const TodoTask = require("./models/TodoTask");
-const EasyBusiness = require('./models/EasyBusiness');
-const Purchase = require('./models/Purchase');
-const Supplier = require('./models/Supplier');
-const Stock = require('./models/Stock');
-const User = require('./models/User');
 const mongoose = require("mongoose");
 //connection to db
 mongoose.set("useFindAndModify", false);
