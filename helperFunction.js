@@ -32,5 +32,20 @@ const validateJWTToken = (token , res) => {
           })
     }
 }
+const genricJWTValidator = (token ) => {
+    let result= null;
+    if (token != null){
+        jwt.verify(token, process.env.TOKEN_SECRET , (err, user) => {
+            console.log("ERROR & USER ", err, user);
+            if (user) {
+               result = user;
+            } else {
+               result = false;
+            }
+          })
+    }
+    return result;
+}
+exports.genricJWTValidator = genricJWTValidator;
 exports.validateJWTToken = validateJWTToken;
 exports.generateJWTToken = generateJWTToken;  
