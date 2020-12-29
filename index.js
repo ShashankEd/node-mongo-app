@@ -12,6 +12,7 @@ const Purchase = require('./models/Purchase');
 const Supplier = require('./models/Supplier');
 const Stock = require('./models/Stock');
 const User = require('./models/User');
+const Token = require('./models/token');
 const mongoose = require("mongoose");
 //connection to db
 mongoose.set("useFindAndModify", false);
@@ -74,35 +75,6 @@ app.route("/remove/:id").get((req, res) => {
     });
 });
 
-//easy business model- APIS
-
-// GET METHOD FOR EASY BUSINESS TO GET ALL THE ITEMS AVAILABLE
-app
-    .route("/getAllItems")
-    .get((req, res) => {
-        EasyBusiness.find({}, (err, obj) => {
-            res.send(obj);
-        });
-    });
-
-app
-    .route("/add-item")
-    .post(async (req, res) => {
-        console.log("req.body ", req)
-        const easyBusiness = new EasyBusiness({
-            itemType: req.body.itemType,
-            itemCategory: req.body.itemCategory,
-            itemCost: req.body.itemCost,
-            itemName: req.body.itemName,
-            itemExpiry: req.body.itemExpiry,
-        });
-        try {
-            await easyBusiness.save();
-            res.send({ "result": "Records inserted" });
-        } catch (err) {
-            res.send({ "error": err });
-        }
-    });
 
 //register endpoint
 app
@@ -121,6 +93,11 @@ app
                     console.log("registered");
                     const tok = helper.generateJWTToken(req.body.email);
                     console.log("user saved and token ", tok);
+                    const token = new Token({
+                        email: req.body.email,
+                        token: tok
+                    });
+                    token.save();
                     res.json({
                         "data": {
                             "token": tok
@@ -262,3 +239,33 @@ app
             res.send({ "error": err });
         }
     });
+
+    //easy business model- APIS
+
+// GET METHOD FOR EASY BUSINESS TO GET ALL THE ITEMS AVAILABLE
+app
+.route("/getAllItems")
+.get((req, res) => {
+    EasyBusiness.find({}, (err, obj) => {
+        res.send(obj);
+    });
+});
+
+app
+.route("/add-item")
+.post(async (req, res) => {
+    console.log("req.body ", req)
+    const easyBusiness = new EasyBusiness({
+        itemType: req.body.itemType,
+        itemCategory: req.body.itemCategory,
+        itemCost: req.body.itemCost,
+        itemName: req.body.itemName,
+        itemExpiry: req.body.itemExpiry,
+    });
+    try {
+        await easyBusiness.save();
+        res.send({ "result": "Records inserted" });
+    } catch (err) {
+        res.send({ "error": err });
+    }
+});
