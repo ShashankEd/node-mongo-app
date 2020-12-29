@@ -6,6 +6,13 @@ const helper = require('./helperFunction');
 app.use('/static', express.static('public'))
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
+const helper = require('./helperFunction');
+const User = require("./models/User");
+const EasyBusiness = require("./models/EasyBusiness");
+const Purchase = require("./models/Purchase");
+const Stock = require("./models/Stock");
+const Supplier = require('./models/Supplier');
+const Token = require("./models/Token");
 const mongoose = require("mongoose");
 //connection to db
 mongoose.set("useFindAndModify", false);
