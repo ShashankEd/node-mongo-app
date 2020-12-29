@@ -6,7 +6,6 @@ const helper = require('./helperFunction');
 app.use('/static', express.static('public'))
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
-const helper = require('./helperFunction');
 const User = require("./models/User");
 const EasyBusiness = require("./models/EasyBusiness");
 const Purchase = require("./models/Purchase");
