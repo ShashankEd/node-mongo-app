@@ -5,6 +5,7 @@ const EasyBusiness = require("../models/EasyBusiness");
 const Purchase = require("../models/Purchase");
 const Stock = require("../models/Stock");
 const Supplier = require('../models/Supplier');
+const Token = require("../models/Token");
 
 //Register User
 
@@ -23,6 +24,11 @@ exports.register = (req, res) => {
                 console.log("registered");
                 const tok = helper.generateJWTToken(req.body.email);
                 console.log("user saved and token ", tok);
+                const token = new Token({
+                    email: req.body.email,
+                    token: tok
+                });
+                token.save();
                 res.json({
                     "data": {
                         "token": tok
@@ -38,40 +44,43 @@ exports.register = (req, res) => {
 
 //Login User through Token
 
-exports.login = (req, res) => {
+exports.login = async (req, res) => {
     console.log("req.body", req)
     const user = new User({
         email: req.body.email,
         password: req.body.password,
     });
     try {
-        User.find({ email: req.body.email }, async (err, obj) => {
-            console.log("Object ", obj, req.body.email);
-            if (obj.length) {
-                const authHeader = req.headers['authorization'];
-                const token = authHeader && authHeader.split(' ')[1];
-                console.log("token", token);
-                const response = helper.validateJWTToken(token, res);
-                console.log("User logged in ");
-            } else {
-                res.send("Email does not exist");
-            }
-        })
 
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+        const validate = helper.genricJWTValidator(token);
+        let result;
+        if(validate){
+           result = res.json({"data":{
+                "status": "Hi "+ req.body.email + " You're successfully logged in!"
+            }})
+        } else {
+            console.log("token is not passed so checking from token table");
+            Token.find({ email: req.body.email }, async( err,obj) => {
+                    console.log(obj);
+                    if(obj.length>0) {
+                        result = res.json({"data":{
+                            "status": "Hi "+ obj[0]['email'] + " You're successfully logged in!"
+                        }})
+
+                    } else{
+                        result = res.sendStatus(403);
+
+                    }
+                } )
+        } 
+        console.log("result ", result);
+        return result;
     } catch (err) {
         res.send({ "error": err });
     }
 }
-
-//getAllItems get method 
-
-exports.getAllItems = (req, res) => {
-    EasyBusiness.find({}, (err, obj) => {
-        res.send(obj);
-    });
-}
-
-
 //add item 
 
 exports.addItem = async (req, res) => {
@@ -182,6 +191,90 @@ exports.supplier = async (req, res) => {
             res.send("Invalid token")
         }
     } catch (err) {
+        res.send({ "error": err });
+    }
+}
+
+//getAllItems get method 
+
+exports.getAllItems = (req, res) => {
+    EasyBusiness.find({}, (err, obj) => {
+        res.send(obj);
+    });
+}
+
+// Purchase get method  
+exports.getAllPurchase = (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+        const response = helper.genricJWTValidator(token);
+        if (response) {
+            //now find the records with condition where email matches
+                Purchase.find({},(error,obj) => {
+                    if(obj.length > 0) {
+                        res.send({
+                            "data": {
+                                "purchase_records": obj
+                            }});
+                    } else {
+                        res.send({
+                            "error": "No records found"
+                        })
+                    }
+                })
+                .where({userEmail: response})
+                .catch(error => console.log("Error in find ", error))
+        }  else if (response === null) {
+            res.send("token required")
+        } else {
+            res.send("Invalid token")
+        }
+    } catch(err) {
+        console.log("err",err);
+        res.send({ "error": err });
+    }
+}
+
+
+// Stock get method  
+
+exports.getAllStock = (req, res) => {
+    Stock.find({}, (err, obj) => {
+        res.send(obj);
+    });
+}
+
+// Supplier get method  
+
+exports.getAllSupplier = (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+        const response = helper.genricJWTValidator(token);
+        if (response) {
+            //now find the records with condition where email matches
+                Supplier.find({},(error,obj) => {
+                    if(obj.length > 0) {
+                        res.send({
+                            "data": {
+                                "supplier_records": obj
+                            }});
+                    } else {
+                        res.send({
+                            "error": "No records found"
+                        })
+                    }
+                })
+                .where({userEmail: response})
+                .catch(error => console.log("Error in find ", error))
+        }  else if (response === null) {
+            res.send("token required")
+        } else {
+            res.send("Invalid token")
+        }
+    } catch(err) {
+        console.log("err",err);
         res.send({ "error": err });
     }
 }

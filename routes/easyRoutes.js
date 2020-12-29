@@ -4,26 +4,35 @@ module.exports = app => {
     var router = require("express").Router();
 
     //1. Register User
-    router.post("/register",serviceController.register);
+    router.post("/register", serviceController.register);
 
-    //5. Login User
-    router.post("/login",serviceController.login);
+    //2. Login User
+    router.post("/login", serviceController.login);
 
+    //3. Add an item 
+    router.post('/add-item', serviceController.addItem);
 
-    //3. Get all items 
-    router.get("/getAllItems",serviceController.getAllItems);
+    //4. Purchase items 
+    router.post('/purchase', serviceController.purchase);
 
-    //4. Add an item 
-    router.post('/add-item',serviceController.addItem);
+    //5. Items Stock 
+    router.post('/stock', serviceController.stock);
 
-    //5. Purchase items 
-    router.post('/purchase',serviceController.purchase);
+    //6. Supplier List
+    router.post('/supplier', serviceController.supplier);
 
-    //6. Items Stock 
-    router.post('/stock',serviceController.stock);
+    //7. Get all items 
+    router.get("/getAllItems", serviceController.getAllItems);
 
-    //7. Supplier List
-    router.post('/supplier',serviceController.supplier);
+    //8. Get All Purchase
+    router.get("/getAllPurchase", serviceController.getAllPurchase);
+    
+    //9. get All Stock
+    router.get("/getAllStock", serviceController.getAllStock);
+
+     //10. get All Suppliertock
+    router.get("/getAllSupplier", serviceController.getAllSupplier);
+    
 
     //bind route 
     app.use(router);
