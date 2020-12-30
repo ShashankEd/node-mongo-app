@@ -22,13 +22,7 @@ mongoose.connect(process.env.DB_CONNECT, { useNewUrlParser: true }, () => {
     app.listen(process.env.PORT || 3000, () => console.log("Mongoose Server Up and running"));
 })
 
-// GET METHOD
-app.get("/", (req, res) => {
-    TodoTask.find({}, (err, tasks) => {
-        res.send(tasks);
-        // res.render("todo.ejs", { todoTasks: tasks });
-    });
-});
+
 
 app
     .route("/add")
@@ -124,23 +118,37 @@ app
             password: req.body.password,
         });
         try {
-            User.find({ email: req.body.email }, async (err, obj) => {
-                console.log("Object ", obj, req.body.email);
-                if (obj.length) {
-                    const authHeader = req.headers['authorization'];
-                    const token = authHeader && authHeader.split(' ')[1];
-                    console.log("token", token);
-                    const response = helper.validateJWTToken(token, res);
-                    console.log("User logged in ");
-                } else {
-                    res.send("Email does not exist");
-                }
-            })
-
+    
+            const authHeader = req.headers['authorization'];
+            const token = authHeader && authHeader.split(' ')[1];
+            const validate = helper.genricJWTValidator(token);
+            let result;
+            if(validate){
+               result = res.json({"data":{
+                    "status": "Hi "+ req.body.email + " You're successfully logged in!"
+                }})
+            } else {
+                console.log("token is not passed so checking from token table");
+                Token.find({ email: req.body.email }, async( err,obj) => {
+                        console.log(obj);
+                        if(obj.length>0) {
+                            result = res.json({"data":{
+                                "status": "Hi "+ obj[0]['email'] + " You're successfully logged in!"
+                            }})
+    
+                        } else{
+                            result = res.sendStatus(403);
+    
+                        }
+                    } )
+            } 
+            console.log("result ", result);
+            return result;
         } catch (err) {
             res.send({ "error": err });
         }
-    });
+    })
+
 //Shubham Gupta
 //Purchase
 app
@@ -175,7 +183,7 @@ app
         } catch (err) {
             res.send({ "error": err });
         }
-    });
+    })
 //Shubham Gupta
 //Supplier
 app
@@ -266,6 +274,76 @@ app
         await easyBusiness.save();
         res.send({ "result": "Records inserted" });
     } catch (err) {
+        res.send({ "error": err });
+    }
+});
+
+// GET METHOD for Purchase
+app
+.route("/getAllPurchase")
+.get((req, res) => {
+    try {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+        const response = helper.genricJWTValidator(token);
+        if (response) {
+            //now find the records with condition where email matches
+                Purchase.find({},(error,obj) => {
+                    if(obj.length > 0) {
+                        res.send({
+                            "data": {
+                                "purchase_records": obj
+                            }});
+                    } else {
+                        res.send({
+                            "error": "No records found"
+                        })
+                    }
+                })
+                .where({userEmail: response})
+                .catch(error => console.log("Error in find ", error))
+        }  else if (response === null) {
+            res.send("token required")
+        } else {
+            res.send("Invalid token")
+        }
+    } catch(err) {
+        console.log("err",err);
+        res.send({ "error": err });
+    }
+});
+
+//App Get Method for Supplier
+app
+.route("/getAllSupplier")
+.get((req, res) => {
+    try {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+        const response = helper.genricJWTValidator(token);
+        if (response) {
+            //now find the records with condition where email matches
+                Supplier.find({},(error,obj) => {
+                    if(obj.length > 0) {
+                        res.send({
+                            "data": {
+                                "supplier_records": obj
+                            }});
+                    } else {
+                        res.send({
+                            "error": "No records found"
+                        })
+                    }
+                })
+                .where({userEmail: response})
+                .catch(error => console.log("Error in find ", error))
+        }  else if (response === null) {
+            res.send("token required")
+        } else {
+            res.send("Invalid token")
+        }
+    } catch(err) {
+        console.log("err",err);
         res.send({ "error": err });
     }
 });
